@@ -1,0 +1,33 @@
+version: '3'
+services:
+#   project_name: PAD_ANOMATESTING
+  anoma_test:
+#     image : quay.io/aicoe/prometheus-anomaly-detector:latest
+    image : pad_anoma:latest
+    user : nobody
+    environment:
+      - TZ=Asia/Seoul
+#       - COMPOSE_PROJECT_NAME=PAD_ANOMATESTING
+      - APP_FILE=test_model.py
+      - FLT_PROM_URL=${PROMETHEUS_URI}
+      - FLT_RETRAINING_INTERVAL_MINUTES=20
+      - FLT_METRICS_LIST=some_metric{exported_instance='some_instance',exported_job='some_job',instance='some_instance',job='some_job',label='val1'} # set metrics
+#       - FLT_METRICS_LIST=some_metric{exported_instance='some_instance',exported_job='some_job',instance='${PUSH_GATE_WAY_IP}',job='some_job',label='val1'} # set metrics
+      - FLT_ROLLING_TRAINING_WINDOW_SIZE=1h
+      - FLT_DATA_START_TIME="2020-11-09 15:00:00"
+      - FLT_DATA_END_TIME="2020-11-10 10:00:00"
+      - MLFLOW_TRACKING_URI=${MLFLOW_URI} # mlflow tracking URI
+    ports:
+      - ${ANOMA_TESTING_PORT}:8080
+    container_name: PAD_ANOMATESTING
+    
+    volumes:
+        - $PWD:/PAD
+    command:
+        - bash
+        - -c
+        - python test_model.py --model_name model_lstm # set model python file name
+      
+      
+      
+# docker run --name pad -p 6070:8080 --user nobody --network host --env FLT_PROM_URL=http://demo.robustperception.io:9090 --env FLT_RETRAINING_INTERVAL_MINUTES=60 --env FLT_METRICS_LIST='up{instance="demo.robustperception.io:9090",job="prometheus"}' --env APP_FILE=test_model.py --env MLFLOW_TRACKING_URI=MLFLOW_IP:6071 --env FLT_DATA_START_TIME=3d --env FLT_DATA_END_TIME=now quay.io/aicoe/prometheus-anomaly-detector:latest
