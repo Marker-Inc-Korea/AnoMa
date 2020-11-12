@@ -1,0 +1,10 @@
+[
+    {
+        "targets": ["push_gate_way_ip":"port"],
+        "labels": {
+           "groups": "anomaly-detection",
+        }
+    }
+
+
+]

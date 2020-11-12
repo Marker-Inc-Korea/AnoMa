@@ -1,0 +1,32 @@
+version: '3.0'
+services:
+  db:
+    image: mlflow_mysql:5.7.31
+    container_name: mlflow_mysql
+    build:
+      context: .
+      dockerfile: Dockerfile-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=Asia/Seoul
+    ports:
+     - ${HOST_MYSQL_PORT}:3306
+    volumes:
+     - ${HOST_MYSQL_DATA_DIR}:/var/lib/mysql
+     - $PWD/src/mysql:/docker-entrypoint-initdb.d
+  mlflow:
+    image: mlflow_server:latest
+    container_name: mlflow_server
+    build:
+      context: .
+      #dockerfile: OVERRIDEN by artifact-uri-specific yaml file
+      args:
+        - ARG_MLFLOW_ARTIFACT_URI=$MLFLOW_ARTIFACT_URI
+    depends_on:
+      - db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MLFLOW_ARTIFACT_URI=${MLFLOW_ARTIFACT_URI}
+      - TZ=Asia/Seoul
+    ports:
+     - ${HOST_MLFLOW_PORT}:5000
