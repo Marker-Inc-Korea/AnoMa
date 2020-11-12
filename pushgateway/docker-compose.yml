@@ -1,0 +1,8 @@
+version: '3'
+services:
+  push_gateway:
+    image : prom/pushgateway
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - ${PUSH_GATE_WAY_PORT}:9091

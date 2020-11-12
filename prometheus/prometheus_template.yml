@@ -1,0 +1,43 @@
+# 기본적인 전역 설정 
+global:
+  scrape_interval:     1s # 15초마다 매트릭을 수집한다. 기본은 1분이다.
+  evaluation_interval: 1s # 15초마다 매트릭을 수집한다. 기본은 1분이다.
+  # 'scrpae_timeout' 이라는 설정은 기본적으로 10초로 세팅되어 있다.
+  
+# Alertmanager 설정
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+# 규칙을 처음 한번 로딩하고 'evaluation_interval'설정에 따라 정기적으로 규칙을 평가한다.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+# 매트릭을 수집할 엔드포인트를 설정. 여기서는 Prometheus 서버 자신을 가리키는 설정을 했다.
+scrape_configs:
+  # 이 설정에서 수집한 타임시리즈에 'job=<job_name>'으로 잡의 이름을 설정한다.
+  - job_name: 'some_job'
+    metrics_path : /metrics
+    # 'metrics_path'라는 설정의 기본 값은 '/metrics'이고
+    # 'scheme'라는 설정의 기본 값은 'http'이다.
+#     static_configs:
+#     - targets:
+    file_sd_configs:
+      - files:
+        - target_push.json
+  - job_name : 'prometheus-anomaly-detector'
+    metrics_path : /metrics
+#     static_configs:
+#     - targets:
+    file_sd_configs:
+      - files:
+        - target_pad.json
+
+
+remote_write:
+ - url: "http://<Public ip of influx server>:<influx service port>/api/v1/prom/read?u=<user>&p=<password>&db=<dbname>"
+# # Remote read configuration (for InfluxDB only at the moment).
+remote_read:
+ - url: "http://<Public ip of influx server>:<influx service port>/api/v1/prom/read?u=<user>&p=<password>&db=<dbname>"
+
