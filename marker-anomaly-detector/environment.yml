@@ -1,0 +1,25 @@
+---
+name: mad-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.6
+  - pip
+  - fbprophet
+  - pip:
+      - pandas
+      - schedule
+      - prometheus_client
+      - prometheus_api_client
+      - influxdb
+      - tornado
+      - dateparser
+      - mlflow
+      - numpy
+      - keras==2.3.0
+      - scikit-learn
+#       - tensorflow
+      - tensorflow==1.14
+      - holidays
+      
+
