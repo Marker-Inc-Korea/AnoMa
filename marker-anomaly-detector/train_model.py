@@ -11,6 +11,9 @@ from configuration import Configuration
 
 import schedule
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 
 # Set up logging
@@ -28,8 +31,8 @@ parser.add_argument('--rolling_size',type = str,
                    help = 'select model name')
 parser.add_argument('--retrain_interval',type = str,
                    help = 'select model name')
-parser.add_argument('--number_of_feature',type = int,
-                   help = 'select model name')
+# parser.add_argument('--number_of_feature',type = int,
+#                    help = 'select model name')
 parser.add_argument('--model_dir',type = str,
                    help = 'select model name')
 args = parser.parse_args()
@@ -66,8 +69,8 @@ def train_model(model=None, initial_run = False, rolling_size = '3d'):
     model = model.MetricPredictor(table_name = args.table_name, 
                               col_name = args.col_name, 
                               rolling_data_window_size = Configuration.rolling_training_window_size,
-                              model_dir = args.model_dir,
-                                 number_of_feature = args.number_of_feature)
+                              model_dir = args.model_dir
+                                 )
     
 
     data_end_time = datetime.now()
@@ -79,12 +82,14 @@ def train_model(model=None, initial_run = False, rolling_size = '3d'):
         
         
     # Download new metric datat from influx db
-    select_clause = """SELECT "value" FROM "prometheus"."autogen"."{table_name}" WHERE time > '{start_time}' AND time < '{end_time}' AND "label"='{col_name}'""".format(
+    select_clause = """SELECT "value" FROM "prometheus"."autogen"."{table_name}" WHERE time > '{start_time}' AND time < '{end_time}' AND "label"='{col_name}' """.format(
     table_name = args.table_name,
     col_name = args.col_name,
     start_time = data_start_time,
     end_time = data_end_time
 )
+    print(select_clause)
+#     quit()
     new_metric_data = pd.DataFrame(db_client.query(select_clause).get_points())
     
     print(new_metric_data)
@@ -103,7 +108,7 @@ def train_model(model=None, initial_run = False, rolling_size = '3d'):
 
 
 if __name__ == "__main__":
-    
+    print('AAAA')
     train_model(model , initial_run=True)
     
     # Schedule the model training
