@@ -4,7 +4,11 @@ import logging
 
 import json
 from tqdm import tqdm
+import os
 import tensorflow as tf
+# import pickle
+import joblib
+
 from models.lstm_vae import LSTM_Var_Autoencoder
 
 import numpy as np
@@ -51,7 +55,7 @@ class MetricPredictor:
 #         self.std = None
         self.table_name = table_name
         self.col_name = col_name
-        self.raw_roll = None
+        self.raw_roll = np.zeros((1,self.number_of_features,1))
         self.x_dim = 30
         self.z_dim = 10
         self.model_dir = model_dir
@@ -88,14 +92,21 @@ class MetricPredictor:
 
         return vae
     
-    def reload_model(self):
-        self.model_dir = self.model_dir + '/{table_name}_{col_name}'.format(self.table_name, self.col_name)
+    def reload_model(self, initialize_load = True):
+        if initialize_load:
+            self.model_dir = os.getcwd()+'/'+self.model_dir + '/{table_name}_{col_name}/{model_name}'.format(table_name = self.table_name, col_name = self.col_name, model_name = self.model_name)
+            print(self.model_dir)
+            
         
-        model =  self.get_model(self.x_dim, self.z_dim, True)
-        _LOGGER.info("RESTORING MODEL RETURN START" )
+        self.model =  self.get_model(self.x_dim, self.z_dim, True)
+        self.model.model_dir = self.model_dir
+        self.model.load_model()
+        scalar_file_name = self.model_dir + '/' + 'scalar.pkl'
+        self.scalar = joblib.load(scalar_file_name)
+        _LOGGER.info("RESTORING MODEL RETURN START")
 #         model.load_model(self.model_dir)
 #         _LOGGER.info("RESTORING MODEL RETURN")
-        return model
+#         return model
     
     def get_variable(self):
         _LOGGER.info("RETRUN MODEL VARIABLE")
@@ -110,8 +121,11 @@ class MetricPredictor:
         
         # normalising
         self.metric = metric_data
+        _LOGGER.info(self.metric.shape)
+#         quit()
         timestamps = self.metric.iloc[:,0]
         metric_values_np = self.metric.iloc[:,1].values
+#         self.scalar = self.scalar.fit(metric_values_np.reshape(-1,1))
         scaled_np_arr = self.scalar.fit_transform(metric_values_np.reshape(-1,1))
         
         
@@ -136,25 +150,35 @@ class MetricPredictor:
         x_train_rolling = self.unroll_auto(scaled_np_arr, self.number_of_features)
         
 #         _LOGGER.debug(x_train_rolling.shape)
-        print(x_train_rolling.shape)
+        _LOGGER.info(x_train_rolling.shape)
         
         model.fit(x_train_rolling, learning_rate=0.001, batch_size = 100, 
-                num_epochs = 5, opt = tf.train.AdamOptimizer, REG_LAMBDA = 0.01,
+                num_epochs = 100, opt = tf.train.AdamOptimizer, REG_LAMBDA = 0.01,
                 grad_clip_norm=10, optimizer_params=None, verbose = True)
 #         quit()
         
-        self.model_dir = self.model_dir + '/{table_name}_{col_name}/{model_name}'.format(table_name = self.table_name, col_name = self.col_name, model_name = self.model_name)
+        self.model_dir = os.getcwd()+'/'+self.model_dir + '/{table_name}_{col_name}/{model_name}'.format(table_name = self.table_name, col_name = self.col_name, model_name = self.model_name)
         print(self.model_dir)
+#         quit()
         Path(self.model_dir).mkdir(parents=True, exist_ok=True)
 #         quit()
 #         self.model_dir = '/PAD/MODEL/'
         
         
         model.save_model(self.model_dir)
+        
+        
+        scalar_file_name = self.model_dir + '/' + 'scalar.pkl'
+#         pickle.dump(scaler, open('scaler.scl','wb'))
+#         self.scalar = pickle.load(open(scalar_file_name, 'rb'))
+        joblib.dump(self.scalar, scalar_file_name)
+#         pickle.dump(self.scalar, open(scalar_file_name,'wb'))
+        _LOGGER.info("Save model - {} ".format(self.model_dir))
+        
         _LOGGER.info("Training end")
 
     
-    def predict_value(self, predict_value, model):
+    def predict_value(self, predict_value):
         """Return the predicted value of the metric for the prediction_datetime."""
 #         model.load_model(self.model_dir)
 #         _LOGGER.info("RESTORING MODEL RETURN")
@@ -169,19 +193,19 @@ class MetricPredictor:
         predict_value_pp = self.scalar.transform(predict_value.reshape(-1,1))
         _LOGGER.info("Scalar transform")
         self.raw_roll[:,-1, : ] = predict_value_pp
-        print(self.raw_roll)
+#         print(self.raw_roll)
 #         _LOGGER.info
         _LOGGER.info(self.raw_roll.shape)
 #         graph = tf.get_default_graph()
 #         with model.graph.as_default():
             
-        x_reconstructed, recons_error = model.reconstruct(self.raw_roll, get_error = True)
+        x_reconstructed, recons_error = self.model.reconstruct(self.raw_roll, get_error = True)
         _LOGGER.info("Model reconstruction")
         dataframe_cols = {"yhat": np.array(self.scalar.inverse_transform(x_reconstructed[:,-1, : ]))}
         upper_bound = np.array(
             [
                 (
-                    self.scalar.inverse_transform(x_reconstructed[:, -1,:]) + (np.std(self.scalar.inverse_transform(x_reconstructed[0, :-1])) * 2 )
+                    self.scalar.inverse_transform(x_reconstructed[:, -1,:]) + (np.std(self.scalar.inverse_transform(x_reconstructed[0, :-1])) * 4 )
                 ) 
             ]
         ).flatten()
@@ -190,7 +214,7 @@ class MetricPredictor:
         lower_bound = np.array(
             [
                 (
-                    self.scalar.inverse_transform(x_reconstructed[:, -1,:]) + (np.std(self.scalar.inverse_transform(x_reconstructed[0, :-1])) * 2 )
+                    self.scalar.inverse_transform(x_reconstructed[:, -1,:]) - (np.std(self.scalar.inverse_transform(x_reconstructed[0, :-1])) * 4 )
                 ) 
             ]
         ).flatten()
@@ -198,12 +222,50 @@ class MetricPredictor:
         
         
         
-        
         dataframe_cols["yhat_upper"] = upper_bound
         dataframe_cols["yhat_lower"] = lower_bound
+#         _LOGGER.info("YHAT : {} UPPER : {}  LOWER : {}".format(dataframe_cols["yhat"], 
+#                                                                dataframe_cols["yhat_upper"],
+#                                                                dataframe_cols["yhat_lower"]
+#                                                               )
+#                     )
         
-        forecast = pd.DataFrame(data = dataframe_cols)
-        print(dataframe_cols)
+        # prophet model(origin value base)
+#         anomaly = 1
+#         if (
+#                 last_df['last'].values < dataframe_cols["yhat_upper"]
+#             ) and (
+#                 last_df['last'].values > dataframe_cols["yhat_lower"]
+#             ):
+#                 anomaly = 0
+        
+    
+        # lstm_vae model(reconstruct value base)
+        anomaly = 1
+        if (
+                dataframe_cols["yhat"] < dataframe_cols["yhat_upper"]
+            ) and (
+                dataframe_cols["yhat"] > dataframe_cols["yhat_lower"]
+            ):
+                anomaly = 0
+                
+                
+        
+        
+        return (dataframe_cols["yhat"], dataframe_cols["yhat_lower"], dataframe_cols["yhat_upper"], anomaly)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+#         forecast = pd.DataFrame(data = dataframe_cols)
+        
+#         print(dataframe_cols)
         
         
         
@@ -212,7 +274,7 @@ class MetricPredictor:
 #         nearest_index = self.predicted_df.index.get_loc(
 #             prediction_datetime, method="nearest"
 #         )
-        return forecast
+#         return dataframe_cols
     
             
             
