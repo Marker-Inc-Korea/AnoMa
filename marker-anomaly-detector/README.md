@@ -2,15 +2,16 @@
 
 Set up docker file:
 ```
-docker build --tag pad_anoma .
+docker build --tag mad_anoma .
+```
+
+To lauch a anomaly train:
+```
+docker-compose -f docker-compose-mad.yml -p MAD_ANOMA up -d
 ```
 
 To lauch a anomaly deploy:
 ```
-docker-compose -f docker-compose-pad.yml -p ANOMA_PAD up -d
+docker-compose -f docker-compose-mad-deploy.yml -p MAD_ANOMADEPLOY up -d
 ```
 
-To lauch a anomaly testing:
-```
-docker-compose -f docker-compose-pad.yml -p ANOMA_TESTING up -d
-```

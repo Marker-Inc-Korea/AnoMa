@@ -41,6 +41,8 @@ class Configuration:
         )
     ).split(";")
     
+    
+    # list of metricst for scraping data from influxdb
     table_list = str(
         os.getenv(
             "FLT_TABLE_LIST",
