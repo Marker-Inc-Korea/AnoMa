@@ -2,6 +2,7 @@
 import os
 import logging
 from prometheus_api_client.utils import parse_datetime, parse_timedelta
+from ast import literal_eval
 
 if os.getenv("FLT_DEBUG_MODE", "False") == "True":
     LOGGING_LEVEL = logging.DEBUG  # Enable Debug mode
@@ -18,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 class Configuration:
     """docstring for Configuration."""
 
-    # url for the prometheus host
+    # url for the influxdb host
 #     prometheus_url = os.getenv("FLT_PROM_URL")
     influxdb_url = os.getenv("FLT_INFL_URL")
 
@@ -42,13 +43,26 @@ class Configuration:
     ).split(";")
     
     
-    # list of metricst for scraping data from influxdb
+    # Gets the list of table names of InfluxDB. 
+    # Separator consists of semicolons.
     table_list = str(
         os.getenv(
-            "FLT_TABLE_LIST",
-            "some_metric"
+            "FLT_TABLE_LIST"
         )
     ).split(";")
+    _LOGGER.info(table_list)
+    
+    
+    # Retrieves label names, which are columns under the table of InfluxDB. 
+    # Consists of a dict form.
+    column_list = str(
+        os.getenv(
+            "FLT_COLUMN_LIST"
+        )
+    )
+    if column_list is not None:
+        column_list = literal_eval(column_list)
+    _LOGGER.info(column_list)
 
     # this will create a rolling data window on which the model will be trained
     # example: if set to 15d will train the model on past 15 days of data,
@@ -64,7 +78,10 @@ class Configuration:
     metric_chunk_size = parse_timedelta("now", str(retraining_interval_minutes) + "m")
     
     
-    all_metrics = bool(os.getenv("FLT_ALL_METRICS" , False))
+    # Choose whether to use the entire table.
+    # Choose whether to use the entire column.
+    all_tables = bool(os.getenv("FLT_ALL_TABLES" , False))
+    all_columns = bool(os.getenv("FLT_ALL_COLUMNS", False))
     
     # db information
     influxdb_name = str(os.getenv("FLT_DATABASE_NAME" ))

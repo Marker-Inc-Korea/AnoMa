@@ -21,4 +21,5 @@ dependencies:
 #       - tensorflow
       - tensorflow==1.14
       - holidays
+      - fbprophet
 

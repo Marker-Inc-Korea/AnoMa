@@ -40,7 +40,7 @@ print(args.model_name)
 
 model = importlib.import_module(args.model_name)
 
-# influx db client setting 
+# Influx DB basic information is taken from Configuration.
 DATABASE_URL = Configuration.influxdb_url
 DATABASE_PORT = Configuration.influxdb_port
 DATABASE_NAME = Configuration.influxdb_name
@@ -55,10 +55,13 @@ db_client = InfluxDBClient(DATABASE_URL, DATABASE_PORT, DATABSAE_USERNAME,DATABS
 
 
 start_time = None
-# end_time = None
 
 
-
+# It tracks database updates in real time.
+# Also, according to the retrain_interval variable, 
+# the model is updated according to the model update time.
+# The final prediction results anomaly, yraw, yhat, yhat_lower, and yhat_upper are saved in Influxdb.
+# When saved, the name of the table is created in the form "ANOMALY_{table_name}_{model}".
 def serving_model(model=None, rolling_size = '3d', retrain_interval = 3):
     
     global start_time, end_time
@@ -80,14 +83,12 @@ def serving_model(model=None, rolling_size = '3d', retrain_interval = 3):
     current_time = datetime.now()
     
     while True:
-#         current_time = datetime.now()
+        time.sleep(0.005)
         last_df = pd.DataFrame(db_client.query(last_claues).get_points())
-#         print(last_df)
         last_time = datetime.strptime( last_df['time'].values[0], '%Y-%m-%dT%H:%M:%S.%fZ')
-#         print(current_time)
-#         print(last_time)
-#         print('@@@@@')
-#         quit()
+        
+        
+        # retrain every retrain interval
         if current_time >= retrain_time:
             model.reload_model(initialize_load=False)
             retrain_time = datetime.now() + timedelta(minutes=(retrain_interval) + 0.1)
@@ -96,10 +97,8 @@ def serving_model(model=None, rolling_size = '3d', retrain_interval = 3):
             )
             continue
             
-            
+        # continue - not yet newest value insert to database
         if current_time>=last_time:
-#             current_time = datetime.now()
-#             _LOGGER.info('VALUE IN PASS {}'.format(current_time))
             continue
         
         _LOGGER.info('VALUE IN time : {} - value : {} '.format(last_time, last_df['last'].values))
@@ -121,21 +120,9 @@ def serving_model(model=None, rolling_size = '3d', retrain_interval = 3):
             yhat_upper = yhat_upper,
             
         ))
-#         anomaly = 1
-#         if (
-#                 last_df['last'].values < prediction["yhat_upper"]
-#             ) and (
-#                 last_df['last'].values > prediction["yhat_lower"]
-#             ):
-#                 anomaly = 0
-                
-#         anomaly = 1
-#         if (
-#                 prediction["yhat"] < prediction["yhat_upper"]
-#             ) and (
-#                 prediction["yhat"] > prediction["yhat_lower"]
-#             ):
-#                 anomaly = 0
+
+        
+        
         _LOGGER.info("Anomaly - time : {} value : {}".format(last_time, anomaly))
         
         
@@ -146,7 +133,11 @@ def serving_model(model=None, rolling_size = '3d', retrain_interval = 3):
                 "label" : args.col_name,
                 "time" : last_time,
                 "fields" : {
-                    "value" :  anomaly
+                    "anomaly" :  anomaly,
+                    "yraw" : last_df['last'].values,
+                    "yhat" : yhat,
+                    "yhat_lower" : yhat_lower,
+                    "yhat_upper" : yhat_upper
                 }
             }
         ]
@@ -163,15 +154,3 @@ if __name__ == "__main__":
     
     serving_model(model , Configuration.retraining_interval_minutes)
     
-#     # Schedule the model training
-# #     Configuration.retraining_interval_minutes
-#     schedule.every(3).minutes.do(
-#         serving_model, model= model
-#     )
-#     _LOGGER.info(
-#         "Will reload model every %s minutes", 3
-#     )
-
-#     while True:
-#         schedule.run_pending()
-#         time.sleep(10)
