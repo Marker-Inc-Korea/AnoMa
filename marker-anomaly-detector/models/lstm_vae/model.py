@@ -25,8 +25,6 @@ class LSTM_Var_Autoencoder(object):
 
         tf.reset_default_graph()
         
-#         if predict_==True:
-#             self.graph = tf.get_default_graph()
         
         self.z_dim = z_dim
         self.n_dim = n_dim
@@ -42,28 +40,7 @@ class LSTM_Var_Autoencoder(object):
         self.ite = dataset.make_initializable_iterator()
         self.x = self.ite.get_next()
         self.repeat = tf.placeholder(tf.int32)
-#         self.saver = None
         self.model_dir = None
-#         self.sess = None
-        
-    
-#         self.z_dim = z_dim
-#         self.n_dim = n_dim
-#         self.intermediate_dim = intermediate_dim
-#         self.stateful = stateful
-#         self.input = tf.placeholder(tf.float32, shape=[None, None, self.n_dim], name= 'input')
-#         self.batch_size = tf.placeholder(tf.int64, name='batch_size')
-#         self.kulback_coef = kulback_coef
-#         # tf.data api
-#         dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
-#             .batch(self.batch_size)
-#         self.batch_ = tf.placeholder(tf.int32, shape=[], name='batch_')
-#         self.ite = dataset.make_initializable_iterator()
-#         self.x = self.ite.get_next()
-#         self.repeat = tf.placeholder(tf.int32, name = 'repeat')
-# #         self.saver = None
-#         self.model_dir = None
-# #         self.sess = None
 
         def gauss_sampling(mean, sigma):
             with tf.name_scope("sample_gaussian"):
@@ -184,7 +161,6 @@ class LSTM_Var_Autoencoder(object):
                 self.x_reconstr_mean, _ = tf.nn.dynamic_rnn(
                     cell=multi_rnn_cell, inputs=repeated_z, dtype=tf.float32)
                 
-#         self.saver = tf.train.Saver()
 
     def _create_loss_optimizer(self, opt, **param):
         with tf.name_scope("MSE"):
@@ -238,8 +214,6 @@ class LSTM_Var_Autoencoder(object):
         init = tf.global_variables_initializer()
         self.sess.run(init)
         
-#         saveable = tf.contrib.data.make_saveable_from_iterator(self.ite)
-#         tf.add_to_collections(tf.GraphKeys.SAVEABLE_OBJECTS,saveable)
         self.saver = tf.train.Saver()
         
         self.sess.run(
@@ -284,57 +258,15 @@ class LSTM_Var_Autoencoder(object):
 
 
     def reconstruct(self, X, get_error=False):
-#         print('INPUT CHECK')
-#         print(self.input)
-#         print(self.batch_size)
-#         print(self.ite.initializer)
-#         print(self.batch_)
-#         print('!!!!')
-#         print(self.repeat)
-#         print('!!!!')
-#         print(self.ite)
-#         print(self.batch_)
 
-
-
-#         graph = tf.get_default_graph()
-#         self.input = graph.get_tensor_by_name('input:0')
-#         self.batch_size = graph.get_tensor_by_name('batch_size:0')
-        
-#         dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
-#             .batch(self.batch_size)
-        
-#         self.ite = dataset.make_initializable_iterator()
-        
-        
-        
-        
-#         self.x = self.ite.get_next()
-        
-        
-#         self.batch_ = graph.get_tensor_by_name('batch_:0')
-#         self.repeat = graph.get_tensor_by_name('repeat:0')
-#         self.ite = tf.get_collection('MakeIterator')
-#         self.ite = tf.get_variable("MakeIterator")
-
-#         self.ite = graph.get_operation_by_name('MakeIterator')
-
-#         dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
-#             .batch(self.batch_size)
-#         self.batch_ = tf.placeholder(tf.int32, shape=[], name='batch_')
-#         self.ite = dataset.make_initializable_iterator()
-#         self.x = self.ite.get_next()
-
-#         self.ite = dataset.make_initializable_iterator()
         
         self.sess.run(
             self.ite.initializer,
             
-#             ['MakeIterator'],
             feed_dict={
                 self.input: X,
                 self.batch_size: np.shape(X)[0]})
-#         print('YUYUYUYUYUYUYUYUYUYU')
+        
         if self.stateful:
             _, _ = self.sess.run([self.reset_state_op, self.reset_state_op_], feed_dict={
                                  self.batch_: np.shape(X)[0]})
@@ -374,49 +306,18 @@ class LSTM_Var_Autoencoder(object):
         
     def load_model(self):
         
-#         global graph
-        
-        
-#         graph = tf.get_default_graph()
-#         self.graph = graph
-#         self.graph = tf.get_default_graph()
-        
-        print('TTTTTTTTTTTTTTTTTT')
-        
-#         self.graph = tf.get_default_graph()
+
+
         config = tf.ConfigProto(allow_soft_placement=True)
         config.gpu_options.allow_growth = True
-        print('QQQQQQQQQQQQQ')
-#         init = tf.global_variables_initializer()
         self.sess = tf.Session(config = config)
         
-        print('WWWWWWWWWWWW')
-#         self.sess.run(init)
-        print('EEEEEEEEEEEEEE')
-#         saver = tf.train.import_meta_graph(self.model_dir + '/model.ckpt.meta')
-        print('rrrrrrrrrrrrrrrrr')
-#         saver = tf.compat.v1.train.import_meta_graph(model_dir + '/model.ckpt.meta')
         saver = tf.train.Saver()
         
-#         config.gpu_options.allow_growth = True
-        print("RESTORE START!!!")
         
         saver.restore(self.sess, self.model_dir + '/model.ckpt')
-#         saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
-        
-        
-        # tensor 확인하기
-#         print('tensor Check')
-#         tensors = [ tf.get_default_graph().get_tensor_by_name(tensor.name) for tensor in tf.global_variables()]
-#         alltensors = [ tensor.values()[0] for tensor in self.graph.get_operations()]
-        # print(tensors)
-    
-#         for tnsr in self.graph.get_tensors():
-#             if 'Placeholder' in tnsr.name:
-#                 print(tnsr)
 
         
         
         
         print("RESTORE LSTMVAE MODEL  - {}".format(self.model_dir + '/model.ckpt'))
-#         return graph
