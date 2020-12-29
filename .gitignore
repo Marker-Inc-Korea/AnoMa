@@ -147,3 +147,6 @@ mlflow/mlflow_docker/mysql/*
 
 # model
 marker-anomaly-detector/model/*
+
+# sample
+sample_data.py
