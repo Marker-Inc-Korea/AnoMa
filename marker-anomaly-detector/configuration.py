@@ -66,7 +66,7 @@ class Configuration:
     
     # db information
     influxdb_name = str(os.getenv("FLT_DATABASE_NAME" ))
-    influxdb_port = str(os.getenv("FLT_DATABASE_PORT", 8086))
+    influxdb_port = int(os.getenv("FLT_DATABASE_PORT"))
     influxdb_username = str(os.getenv("FLT_DATABASE_USERNAME"))
     influxdb_password = str(os.getenv("FLT_DATABASE_PASSWORD" ))
     
