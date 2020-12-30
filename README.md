@@ -1,4 +1,6 @@
 # AnoMa
+InfluxDB 기반 실시간 비정상 데이터 예측 검출 Tool  
+
 
 ## Run
 
@@ -63,8 +65,13 @@ docker-compose -f docker-compose-mad-deploy.yml -p MAD_ANOMADEPLOY up -d
 |FLT_COLUMN_LIST|테이블의 특정 컬럼을 사용시 컬럼이름들을 dict형태로 작성 <br/> ex. {'some_metric':['val1', 'val2'],'ano_metric':['val11', 'val22']} ||
 |MODEL_DIR|marker-anomaly-detector 폴더 하위에 모델이 저장될 폴더 이름 <br/> 경로상 폴더가 없을시 자동생성||
 
+## License
 
+[GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
 
-
+## Reference
+prometheus-anomaly-detector [[github page]](https://github.com/AICoE/prometheus-anomaly-detector)  
+Variational-Lstm-Autoencoder [[github page]](https://github.com/TimyadNyda/Variational-Lstm-Autoencoder)  
+docker-influxdb-grafana [[github page]](https://github.com/philhawthorne/docker-influxdb-grafana)
 
 
