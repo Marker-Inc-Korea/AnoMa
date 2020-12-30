@@ -37,13 +37,20 @@ parser.add_argument('--model_dir',type = str,
                    help = 'select model name')
 args = parser.parse_args()
 print(args.model_name)
+# print(os.path.join(os.getcwd(),args.model_name))
 
+
+# spec = importlib.util.spec_from_file_location("module.name", args.model_name)
+# model = importlib.util.module_from_spec(spec)
+# spec.loader.exec_module(model)
+
+# model_import 
 
 
 model = importlib.import_module(args.model_name)
 
 
-# Influx DB basic information is taken from Configuration.
+# influx db client setting 
 DATABASE_URL = Configuration.influxdb_url
 DATABASE_PORT = Configuration.influxdb_port
 DATABASE_NAME = Configuration.influxdb_name
@@ -56,12 +63,6 @@ DATABSAE_PASSWORD = Configuration.influxdb_password
 db_client = InfluxDBClient(DATABASE_URL, DATABASE_PORT, DATABSAE_USERNAME,DATABSAE_PASSWORD,  DATABASE_NAME)
 
 
-
-# Learning proceeds based on past data from the present time.
-# Influxdb retrieves values through a query according to table name, column name and time period.
-# The value obtained through the query is converted into a data frame and used.
-# When only the train_model function is used, it learns once and ends, 
-# but when the train_model.py file is executed, it periodically retrains according to the retrain_interval variable.
 def train_model(model=None, initial_run = False, rolling_size = '3d'):
     
     # train model setting
@@ -88,9 +89,11 @@ def train_model(model=None, initial_run = False, rolling_size = '3d'):
     end_time = data_end_time
 )
     print(select_clause)
+#     quit()
     new_metric_data = pd.DataFrame(db_client.query(select_clause).get_points())
+    
     print(new_metric_data)
-
+#     quit()
     # Train the new model
     start_time = datetime.now()
     model.train(new_metric_data, Configuration.retraining_interval_minutes)
@@ -101,12 +104,12 @@ def train_model(model=None, initial_run = False, rolling_size = '3d'):
             model.col_name,
         )
     
+#     quit()
 
 
 if __name__ == "__main__":
+    print('AAAA')
     train_model(model , initial_run=True)
-    
-    
     
     # Schedule the model training
     schedule.every(Configuration.retraining_interval_minutes).minutes.do(

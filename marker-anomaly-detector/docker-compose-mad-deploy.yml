@@ -1,11 +1,18 @@
 version: '3'
 services:
+#   project_name: PAD_ANOMA
   anoma_deploy:
+#     image : quay.io/aicoe/prometheus-anomaly-detector:latest
     image : mad_anoma:latest
     privileged: true 
+#     stdin_open: true
+#     tty: true
+#     image : quay.io/4n4nd/prometheus-anomaly-detector:latest
     user : nobody
     environment:
 #       - TZ=Asia/Seoul
+#       - COMPOSE_PROJECT_NAME=PAD_ANOMA
+      - APP_FILE=serving_app.py
       - FLT_INFL_URL=${ANOMA_IP}
       - FLT_RETRAINING_INTERVAL_MINUTES=15
       - FLT_ROLLING_TRAINING_WINDOW_SIZE=3h
@@ -13,12 +20,12 @@ services:
       - FLT_DATABASE_PORT=${INFLUX_DB_PORT}
       - FLT_DATABASE_USERNAME=${INFL_DATABASE_USERNAME}
       - FLT_DATABASE_PASSWORD=${INFL_DATABASE_PASSWORD}
-      - FLT_TABLE_LIST=some_metric # set table
-#       - FLT_COLUMN_LIST={'some_metric':['val1', 'val2'],'ano_metric':['val11', 'val22']} # set column
-#       - FLT_ALL_TABLES=True
-      - FLT_ALL_COLUMNS=True
+      - FLT_TABLE_LIST=some_metric # set metrics
+#       - FLT_ALL_METRICS=True
       - MODEL_DIR=model
 #       - FLT_DEBUG_MODE=True
+    ports:
+      - ${ANOMA_PAD_PORT}:8080
     container_name: MAD_ANOMADEPLOY
     
     volumes:
