@@ -27,43 +27,24 @@ class LSTM_Var_Autoencoder(object):
         
 #         if predict_==True:
 #             self.graph = tf.get_default_graph()
-        
+
         self.z_dim = z_dim
         self.n_dim = n_dim
         self.intermediate_dim = intermediate_dim
         self.stateful = stateful
-        self.input = tf.placeholder(tf.float32, shape=[None, None, self.n_dim])
-        self.batch_size = tf.placeholder(tf.int64)
+        self.input = tf.placeholder(tf.float32, shape=[None, None, self.n_dim], name= 'input')
+        self.batch_size = tf.placeholder(tf.int64, name='batch_size')
         self.kulback_coef = kulback_coef
         # tf.data api
         dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
             .batch(self.batch_size)
-        self.batch_ = tf.placeholder(tf.int32, shape=[])
+        self.batch_ = tf.placeholder(tf.int32, shape=[], name='batch_')
         self.ite = dataset.make_initializable_iterator()
         self.x = self.ite.get_next()
-        self.repeat = tf.placeholder(tf.int32)
+        self.repeat = tf.placeholder(tf.int32, name = 'repeat')
 #         self.saver = None
         self.model_dir = None
 #         self.sess = None
-        
-    
-#         self.z_dim = z_dim
-#         self.n_dim = n_dim
-#         self.intermediate_dim = intermediate_dim
-#         self.stateful = stateful
-#         self.input = tf.placeholder(tf.float32, shape=[None, None, self.n_dim], name= 'input')
-#         self.batch_size = tf.placeholder(tf.int64, name='batch_size')
-#         self.kulback_coef = kulback_coef
-#         # tf.data api
-#         dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
-#             .batch(self.batch_size)
-#         self.batch_ = tf.placeholder(tf.int32, shape=[], name='batch_')
-#         self.ite = dataset.make_initializable_iterator()
-#         self.x = self.ite.get_next()
-#         self.repeat = tf.placeholder(tf.int32, name = 'repeat')
-# #         self.saver = None
-#         self.model_dir = None
-# #         self.sess = None
 
         def gauss_sampling(mean, sigma):
             with tf.name_scope("sample_gaussian"):
@@ -294,21 +275,14 @@ class LSTM_Var_Autoencoder(object):
 #         print('!!!!')
 #         print(self.ite)
 #         print(self.batch_)
-
-
-
-#         graph = tf.get_default_graph()
-#         self.input = graph.get_tensor_by_name('input:0')
-#         self.batch_size = graph.get_tensor_by_name('batch_size:0')
+        graph = tf.get_default_graph()
+        self.input = graph.get_tensor_by_name('input:0')
+        self.batch_size = graph.get_tensor_by_name('batch_size:0')
         
-#         dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
-#             .batch(self.batch_size)
+        dataset = tf.data.Dataset.from_tensor_slices(self.input).repeat() \
+            .batch(self.batch_size)
         
-#         self.ite = dataset.make_initializable_iterator()
-        
-        
-        
-        
+        self.ite = dataset.make_initializable_iterator()
 #         self.x = self.ite.get_next()
         
         
@@ -325,6 +299,8 @@ class LSTM_Var_Autoencoder(object):
 #         self.ite = dataset.make_initializable_iterator()
 #         self.x = self.ite.get_next()
 
+        print(self.ite)
+        print('@@@@@@@@@@')
 #         self.ite = dataset.make_initializable_iterator()
         
         self.sess.run(
@@ -414,7 +390,20 @@ class LSTM_Var_Autoencoder(object):
 #         for tnsr in self.graph.get_tensors():
 #             if 'Placeholder' in tnsr.name:
 #                 print(tnsr)
-
+        
+        
+        print(self.sess)
+        print('INPUT CHECK!!!!')
+        print(self.input)
+        print(self.batch_size)
+        print(self.ite.initializer)
+        print(self.batch_)
+        print('!!!!')
+        print(self.repeat)
+        print('!!!!')
+        print(self.ite)
+        print('!!!!')
+        print(self.batch_)
         
         
         

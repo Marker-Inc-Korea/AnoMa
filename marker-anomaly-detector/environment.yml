@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.6
   - pip
-#   - fbprophet
+  - fbprophet
   - pip:
       - pandas
       - schedule
@@ -21,4 +21,5 @@ dependencies:
 #       - tensorflow
       - tensorflow==1.14
       - holidays
+      
 

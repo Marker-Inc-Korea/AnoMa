@@ -16,8 +16,6 @@ import math, time
 import os
 import sys
 from scipy import interpolate
-
-from influxdb import InfluxDBClient
 # import pdb
 
 
@@ -62,7 +60,7 @@ if __name__ == "__main__":
     env.read_env()
     ANOMA_IP = env('ANOMA_IP')
     print(ANOMA_IP)
-    url = 'http://{ip}:6076'.format(ip=ANOMA_IP)
+    url = 'http://{ip}:6074'.format(ip=ANOMA_IP)
     job_name = 'some_job'
     instance = 'instance'
     instance_name = 'some_instance'
@@ -79,9 +77,7 @@ if __name__ == "__main__":
             c_time = datetime.datetime.now()
             x_, y_ = time_value(c_time)
             if k_idx==500:
-#                 data_value = [x_*100, y_*100]
-                
-                data_value = [x_, y_]
+                data_value = [x_*100, y_*100]
 #                 data_value = [metric_1[k_idx]*100,metric_2[k_idx]*100 ]
             else:
                 data_value = [x_, y_]
